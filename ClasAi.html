@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <!-- Penambahan interactive-widget=resizes-content agar keyboard tidak menutupi input -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
+    <title>NINE A AI CLASS ASISTEN</title>
+    <!-- Google Fonts & Font Awesome Icons Custom (Bukan emoji keyboard) -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-main: #f5f3e9;
+            --card-bg: #ffffff;
+            --accent-yellow: #ffe600;
+            --accent-green: #7cfc00;
+            --accent-green-pastel: #a8f5b5;
+            --accent-cyan: #00f0ff;
+            --border-color: #000000;
+            --shadow-hard: 5px 5px 0px #000000;
+            --shadow-btn: 3px 3px 0px #000000;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: #000;
+            height: 100vh; /* Fallback untuk browser lawas */
+            height: 100dvh; /* Perbaikan agar layout mengambang di atas keyboard mobile */
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Animated Grid Cyber Effect in Background */
+        .cyber-grid {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: 
+                linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+            background-size: 30px 30px;
+            animation: moveGrid 20s linear infinite;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        @keyframes moveGrid {
+            0% { background-position: 0 0; }
+            100% { background-position: 30px 30px; }
+        }
+
+        /* App Container */
+        .app-container {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            height: 100dvh; /* Perbaikan agar input tidak tertutup keyboard */
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 15px;
+        }
+
+        /* Header UI (Brutalist Art Style) */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+            border: 3px solid var(--border-color);
+            box-shadow: var(--shadow-hard);
+            padding: 12px 20px;
+            border-radius: 16px;
+            margin-bottom: 15px;
+        }
+
+        .brand-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 800;
+            font-size: 1.2rem;
+            letter-spacing: -0.5px;
+        }
+
+        .badge-status {
+            background: var(--accent-green-pastel);
+            border: 2px solid var(--border-color);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: var(--shadow-btn);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #00e676;
+            border-radius: 50%;
+            border: 1px solid #000;
+        }
+
+        .nav-btn {
+            background: var(--accent-yellow);
+            border: 3px solid var(--border-color);
+            box-shadow: var(--shadow-btn);
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all 0.1s ease;
+        }
+
+        .nav-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 1px 1px 0px #000;
+        }
+
+        /* Sidebar / Drawer Navigation */
+        .drawer {
+            position: fixed;
+            top: 0; right: -320px;
+            width: 300px;
+            height: 100%;
+            background: var(--bg-main);
+            border-left: 4px solid var(--border-color);
+            z-index: 100;
+            transition: right 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-shadow: -10px 0px 0px rgba(0,0,0,0.1);
+        }
+
+        .drawer.open {
+            right: 0;
+        }
+
+        .drawer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .btn-new-chat {
+            background: var(--accent-green-pastel);
+            border: 3px solid var(--border-color);
+            box-shadow: var(--shadow-btn);
+            padding: 12px;
+            border-radius: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .history-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .history-item {
+            background: var(--card-bg);
+            border: 2px solid var(--border-color);
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: var(--shadow-btn);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+
+        .history-item.active {
+            background: var(--accent-yellow);
+        }
+
+        .btn-del-history {
+            background: #ff5252;
+            color: #fff;
+            border: 1px solid #000;
+            padding: 4px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        /* Chat Body & Columns Fixed Container */
+        .chat-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--card-bg);
+            border: 3px solid var(--border-color);
+            box-shadow: var(--shadow-hard);
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .chat-box {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            scroll-behavior: smooth;
+        }
+
+        /* Bubble Chat Neo-Brutalism */
+        .msg-row {
+            display: flex;
+            flex-direction: column;
+            max-width: 85%;
+            animation: fadeIn 0.2s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .msg-row.user {
+            align-self: flex-end;
+        }
+
+        .msg-row.ai {
+            align-self: flex-start;
+        }
+
+        .msg-bubble {
+            border: 3px solid var(--border-color);
+            padding: 14px 18px;
+            border-radius: 16px;
+            box-shadow: var(--shadow-btn);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            position: relative;
+            word-break: break-word;
+        }
+
+        .msg-row.user .msg-bubble {
+            background: var(--accent-yellow);
+            border-bottom-right-radius: 4px;
+        }
+
+        .msg-row.ai .msg-bubble {
+            background: #f8f9fa;
+            border-bottom-left-radius: 4px;
+        }
+
+        /* Actions Container (Copy, Share, Edit) */
+        .msg-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 6px;
+        }
+
+        .msg-row.user .msg-actions {
+            justify-content: flex-end;
+        }
+
+        .action-btn {
+            background: var(--card-bg);
+            border: 2px solid var(--border-color);
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 2px 2px 0px #000;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .action-btn:hover {
+            background: var(--accent-cyan);
+        }
+
+        /* Code Block UI in Chat */
+        pre {
+            background: #1e1e1e;
+            color: #00ff66;
+            font-family: 'JetBrains Mono', monospace;
+            padding: 12px;
+            border-radius: 8px;
+            border: 2px solid var(--border-color);
+            overflow-x: auto;
+            margin: 10px 0;
+            position: relative;
+        }
+
+        .code-copy-btn {
+            position: absolute;
+            top: 5px; right: 5px;
+            background: var(--accent-yellow);
+            border: 1px solid #000;
+            padding: 2px 8px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        /* Generated Image Container */
+        .generated-img {
+            max-width: 100%;
+            border: 3px solid var(--border-color);
+            border-radius: 12px;
+            margin-top: 10px;
+            box-shadow: var(--shadow-btn);
+        }
+
+        .btn-download-img {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--accent-green-pastel);
+            border: 2px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            margin-top: 8px;
+            text-decoration: none;
+            color: #000;
+            box-shadow: var(--shadow-btn);
+        }
+
+        /* Fixed Area Input Box (Tidak makin ke bawah) */
+        .input-panel {
+            background: var(--card-bg);
+            border-top: 3px solid var(--border-color);
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .preview-file {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            background: var(--accent-green-pastel);
+            border: 2px solid var(--border-color);
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            width: fit-content;
+        }
+
+        .input-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+        }
+
+        .btn-attach {
+            background: var(--accent-cyan);
+            border: 3px solid var(--border-color);
+            box-shadow: var(--shadow-btn);
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        textarea {
+            flex: 1;
+            border: 3px solid var(--border-color);
+            border-radius: 12px;
+            padding: 12px;
+            font-size: 0.95rem;
+            outline: none;
+            resize: none;
+            max-height: 120px;
+            min-height: 48px;
+            box-shadow: inset 2px 2px 0px rgba(0,0,0,0.05);
+            line-height: 1.4;
+            overflow-y: auto; /* Perbaikan agar teks mudah di-scroll ke atas/bawah jika panjang */
+        }
+
+        .btn-send {
+            background: var(--accent-yellow);
+            border: 3px solid var(--border-color);
+            box-shadow: var(--shadow-btn);
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+            transition: all 0.1s ease;
+        }
+
+        .btn-send:active {
+            transform: translate(2px, 2px);
+            box-shadow: 1px 1px 0px #000;
+        }
+
+        /* Overlay Drawer */
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.3);
+            z-index: 90;
+            display: none;
+        }
+        .overlay.show { display: block; }
+    </style>
+</head>
+<body>
+
+    <div class="cyber-grid"></div>
+
+    <div class="app-container">
+        <!-- Header Section -->
+        <header>
+            <div class="brand-title">
+                <i class="fa-solid fa-microchip-ai" style="font-size: 1.5rem; color: #000;"></i>
+                <span>NINE A AI CLASS</span>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <div class="badge-status">
+                    <span class="status-dot"></span> ONLINE
+                </div>
+                <!-- Draw Bar Toggle Menu -->
+                <button class="nav-btn" id="openDrawerBtn">
+                    <i class="fa-solid fa-bars-staggered"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Chat Box Container -->
+        <div class="chat-wrapper">
+            <div class="chat-box" id="chatBox">
+                <!-- Message Dynamic Inject Here -->
+            </div>
+
+            <!-- Input Fixed Area -->
+            <div class="input-panel">
+                <div class="preview-file" id="filePreview">
+                    <i class="fa-solid fa-file-code"></i>
+                    <span id="fileName">document.pdf</span>
+                    <i class="fa-solid fa-xmark" style="cursor:pointer;" onclick="removeFile()"></i>
+                </div>
+                <div class="input-row">
+                    <!-- File Upload Button -->
+                    <button class="btn-attach" onclick="document.getElementById('fileInput').click()">
+                        <i class="fa-solid fa-paperclip"></i>
+                    </button>
+                    <input type="file" id="fileInput" hidden onchange="handleFile(event)">
+
+                    <!-- Text Area (Auto Expand Height Adjust) -->
+                    <textarea id="userInput" rows="1" placeholder="Ketik pesan atau minta buatkan kode/gambar..." oninput="autoResize(this)"></textarea>
+
+                    <!-- Send Button -->
+                    <button class="btn-send" onclick="sendMessage()">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Drawer Navigation (Pojok Kanan Atas) -->
+    <div class="overlay" id="overlay" onclick="closeDrawer()"></div>
+    <div class="drawer" id="drawer">
+        <div class="drawer-header">
+            <h3><i class="fa-solid fa-clock-rotate-left"></i> RIWAYAT</h3>
+            <button class="nav-btn" style="width:30px; height:30px; font-size:0.8rem;" onclick="closeDrawer()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <button class="btn-new-chat" onclick="startNewChat()">
+            <i class="fa-solid fa-plus"></i> OBROLAN BARU
+        </button>
+
+        <div class="history-list" id="historyList">
+            <!-- Dynamic History Menu -->
+        </div>
+
+        <button class="btn-new-chat" style="background:#ff7675; color:#fff;" onclick="resetAllData()">
+            <i class="fa-solid fa-trash-can"></i> RESET SEMUA
+        </button>
+    </div>
+
+    <script>
+        // API Base URL
+        const API_URL = "https://api.ikyyxd.my.id/ai/gpt-5-mini?question=";
+        
+        let chats = {};
+        let currentChatId = null;
+        let isFirstChatEver = true;
+        let attachedFile = null;
+
+        // Load Initial State
+        window.onload = () => {
+            const saved = localStorage.getItem('NINEA_CHAT_STORE');
+            if (saved) {
+                chats = JSON.parse(saved);
+            }
+            startNewChat(false);
+            renderHistory();
+        };
+
+        // Drawer Navigation Logic
+        const drawer = document.getElementById('drawer');
+        const overlay = document.getElementById('overlay');
+        document.getElementById('openDrawerBtn').onclick = () => {
+            drawer.classList.add('open');
+            overlay.classList.add('show');
+        };
+        function closeDrawer() {
+            drawer.classList.remove('open');
+            overlay.classList.remove('show');
+        }
+
+        // Auto Resize Textarea (Diperbaiki agar tidak loncat/hilang kursor saat ngetik banyak)
+        function autoResize(textarea) {
+            textarea.style.height = '48px'; 
+            textarea.style.height = (textarea.scrollHeight < 120 ? textarea.scrollHeight : 120) + 'px';
+        }
+
+        // File Handler
+        function handleFile(e) {
+            const file = e.target.files[0];
+            if (file) {
+                attachedFile = file.name;
+                document.getElementById('fileName').innerText = file.name;
+                document.getElementById('filePreview').style.display = 'flex';
+            }
+        }
+        function removeFile() {
+            attachedFile = null;
+            document.getElementById('fileInput').value = "";
+            document.getElementById('filePreview').style.display = 'none';
+        }
+
+        // New Chat Management
+        function startNewChat(autoSwitch = true) {
+            const newId = 'chat_' + Date.now();
+            currentChatId = newId;
+            chats[currentChatId] = {
+                title: 'Obrolan Baru',
+                messages: [
+                    {
+                        sender: 'ai',
+                        text: "Halo! Saya **NINE A AI CLASS ASISTEN** dikembangkan oleh VLZ0BYTE & Open AI team. Ada yang bisa dibantu?"
+                    }
+                ],
+                isSavedInHistory: false
+            };
+            if(autoSwitch) {
+                renderMessages();
+                renderHistory();
+                closeDrawer();
+            } else {
+                renderMessages();
+            }
+        }
+
+        function saveToStorage() {
+            localStorage.setItem('NINEA_CHAT_STORE', JSON.stringify(chats));
+        }
+
+        // Fungsi fetch respon AI (Dipisahkan agar bisa dipanggil saat Edit pesan juga)
+        async function fetchAIResponse(text, currentChat) {
+            const isImageReq = text.toLowerCase().includes("buatkan gambar") || text.toLowerCase().includes("gambar");
+
+            // AI Temporary Loading Bubble
+            const loadingMsgIndex = currentChat.messages.push({ sender: 'ai', text: '<i>Sedang memproses...</i>' }) - 1;
+            renderMessages();
+
+            try {
+                if (isImageReq) {
+                    // Pollination Image Gen standard API URL
+                    const promptEncoded = encodeURIComponent(text);
+                    const imgUrl = `https://image.pollinations.ai/prompt/${promptEncoded}?width=800&height=600&nologo=true`;
+                    
+                    currentChat.messages[loadingMsgIndex] = {
+                        sender: 'ai',
+                        text: `Berikut adalah gambar yang kamu minta:`,
+                        image: imgUrl
+                    };
+                } else {
+                    // Call Real AI API GPT-5 Mini
+                    const res = await fetch(API_URL + encodeURIComponent(text));
+                    const data = await res.json();
+                    
+                    let aiReply = "";
+                    if (data && data.result) {
+                        aiReply = data.result;
+                    } else {
+                        aiReply = "Maaf, sistem gagal memproses respons dari server API.";
+                    }
+
+                    currentChat.messages[loadingMsgIndex] = {
+                        sender: 'ai',
+                        text: aiReply
+                    };
+                }
+            } catch (err) {
+                currentChat.messages[loadingMsgIndex] = {
+                    sender: 'ai',
+                    text: "Terjadi kesalahan koneksi ke server AI API."
+                };
+            }
+
+            saveToStorage();
+            renderMessages();
+        }
+
+        // Send Message
+        async function sendMessage() {
+            const inputEl = document.getElementById('userInput');
+            let text = inputEl.value.trim();
+
+            if (!text && !attachedFile) return;
+
+            if (attachedFile) {
+                text = `[File Lampiran: ${attachedFile}]\n` + text;
+                removeFile();
+            }
+
+            // Lock first message for auto history naming if user types "hello"
+            const currentChat = chats[currentChatId];
+            
+            if (!currentChat.isSavedInHistory) {
+                if (text.toLowerCase().includes("hello") || text.toLowerCase().includes("halo")) {
+                    currentChat.title = "perkenalan diri";
+                } else {
+                    currentChat.title = text.substring(0, 18) + "...";
+                }
+                currentChat.isSavedInHistory = true;
+            }
+
+            // User Message Push
+            currentChat.messages.push({ sender: 'user', text: text });
+            inputEl.value = '';
+            inputEl.style.height = '48px';
+            renderMessages();
+            renderHistory();
+
+            // Panggil API
+            await fetchAIResponse(text, currentChat);
+        }
+
+        // Render Chat Screen
+        function renderMessages() {
+            const chatBox = document.getElementById('chatBox');
+            chatBox.innerHTML = '';
+
+            const currentChat = chats[currentChatId];
+            if (!currentChat) return;
+
+            currentChat.messages.forEach((msg, idx) => {
+                const row = document.createElement('div');
+                row.className = `msg-row ${msg.sender}`;
+
+                let contentHtml = parseCodeAndFormat(msg.text);
+
+                if (msg.image) {
+                    contentHtml += `<br><img src="${msg.image}" class="generated-img"><br>
+                    <a href="${msg.image}" download="nine_a_image.jpg" target="_blank" class="btn-download-img"><i class="fa-solid fa-download"></i> Download Gambar</a>`;
+                }
+
+                row.innerHTML = `
+                    <div class="msg-bubble">${contentHtml}</div>
+                    <div class="msg-actions">
+                        <button class="action-btn" onclick="copyText('${escapeQuotes(msg.text)}')"><i class="fa-solid fa-copy"></i> Salin</button>
+                        <button class="action-btn" onclick="shareText('${escapeQuotes(msg.text)}')"><i class="fa-solid fa-share-nodes"></i> Bagikan</button>
+                        ${msg.sender === 'user' ? `<button class="action-btn" onclick="editMsg(${idx})"><i class="fa-solid fa-pen"></i> Edit</button>` : ''}
+                    </div>
+                `;
+                chatBox.appendChild(row);
+            });
+
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // Format Text & Code Directly Display
+        function parseCodeAndFormat(str) {
+            if (!str) return '';
+            
+            // Format Markdown Code Blocks (```code```) directly inside chat
+            const codeBlockRegex = /```(?:(\w+)\n)?([\s\S]*?)```/g;
+            let formatted = str.replace(codeBlockRegex, (match, lang, code) => {
+                return `<pre><button class="code-copy-btn" onclick="copyText('${escapeQuotes(code.trim())}')">Copy Code</button><code>${escapeHtml(code.trim())}</code></pre>`;
+            });
+
+            // Bold conversion
+            formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+            // Line break conversion
+            formatted = formatted.replace(/\n/g, '<br>');
+
+            return formatted;
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        function escapeQuotes(text) {
+            return text.replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, '\\n');
+        }
+
+        // Copy Text Function
+        function copyText(text) {
+            navigator.clipboard.writeText(text);
+            alert("Teks/Kode berhasil disalin!");
+        }
+
+        // Share Text Function
+        function shareText(text) {
+            if (navigator.share) {
+                navigator.share({ title: 'NINE A AI', text: text });
+            } else {
+                copyText(text);
+            }
+        }
+
+        // Edit User Message (Diperbaiki agar AI merespons langsung setelah diedit)
+        function editMsg(index) {
+            const currentChat = chats[currentChatId];
+            const oldText = currentChat.messages[index].text;
+            const newText = prompt("Edit pesan Anda:", oldText);
+            
+            if (newText !== null && newText.trim() !== "") {
+                currentChat.messages[index].text = newText;
+                // Delete responses after this message
+                currentChat.messages = currentChat.messages.slice(0, index + 1);
+                saveToStorage();
+                renderMessages();
+                
+                // Langsung mengirimkan request AI secara otomatis untuk merespons pesan yang baru diedit!
+                fetchAIResponse(newText, currentChat);
+            }
+        }
+
+        // Render Drawer History Menu
+        function renderHistory() {
+            const historyList = document.getElementById('historyList');
+            historyList.innerHTML = '';
+
+            Object.keys(chats).forEach(id => {
+                const item = chats[id];
+                if (!item.isSavedInHistory) return;
+
+                const div = document.createElement('div');
+                div.className = `history-item ${id === currentChatId ? 'active' : ''}`;
+                div.onclick = () => {
+                    currentChatId = id;
+                    renderMessages();
+                    renderHistory();
+                    closeDrawer();
+                };
+
+                div.innerHTML = `
+                    <span><i class="fa-solid fa-message"></i> ${escapeHtml(item.title)}</span>
+                    <button class="btn-del-history" onclick="deleteHistory(event, '${id}')"><i class="fa-solid fa-trash"></i></button>
+                `;
+                historyList.appendChild(div);
+            });
+        }
+
+        // Delete Single History
+        function deleteHistory(e, id) {
+            e.stopPropagation();
+            delete chats[id];
+            saveToStorage();
+            if (currentChatId === id) {
+                startNewChat(false);
+            }
+            renderHistory();
+        }
+
+        // Reset All Data
+        function resetAllData() {
+            if (confirm("Hapus semua riwayat obrolan?")) {
+                localStorage.removeItem('NINEA_CHAT_STORE');
+                chats = {};
+                startNewChat(true);
+            }
+        }
+
+        // Fix Keyboard Overlap (Visual Viewport Sync)
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', () => {
+                const appContainer = document.querySelector('.app-container');
+                if (appContainer) {
+                    appContainer.style.height = `${window.visualViewport.height}px`;
+                }
+                const chatBox = document.getElementById('chatBox');
+                if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
+            });
+        }
+
+        // Event listener saat textarea di-fokus (diklik)
+        document.getElementById('userInput').addEventListener('focus', function() {
+            setTimeout(() => {
+                this.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                const chatBox = document.getElementById('chatBox');
+                if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
+            }, 300);
+        });
+    </script>
+</body>
+</html>
